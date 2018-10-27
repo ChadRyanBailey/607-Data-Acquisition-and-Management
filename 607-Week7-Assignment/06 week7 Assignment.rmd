@@ -1,0 +1,192 @@
+---
+title: "Week7 Assignment"
+author: "Chad Bailey"
+date: "October 13, 2018"
+---
+
+##Overview
+This assignment explores the abilty of the R language to interact with various file types. Specifically, it will attempt to load the following file types to R dataframes:
+
+* .html
+* .xml
+* .json
+
+This will be done using three files, one for each of the data types listed above. Each of the files will contain the same information, but will be constructed in the format requirement of that specific file type. The files will contain information on a set of three books and include data for each of the follwoing areas:
+
+* Title
+* Author
+* Number of Pages
+* Publish Year  
+  
+## HTML
+Load and parse the HTML file:
+```{r}
+library(XML)
+library(stringr)
+
+fileLocation <- "C:/Users/cbailey/Documents/GitHub/607-Week7-Assignment/02_Books.html"
+parsed_html <- htmlParse(file = fileLocation)
+parsed_html
+```
+
+Load the parsed data to a dataframe
+```{r}
+books_html <- as.data.frame(readHTMLTable(doc = parsed_html))
+books_html
+```
+
+Cleanup the names of the dataframe columns
+```{r}
+names(books_html) <- str_replace_all(names(books_html), "NULL.", "")
+names(books_html) <- str_replace_all(names(books_html), "\\.", "_")
+names(books_html)
+
+```
+
+##XML
+####XML Method1
+
+Load and parse the XML file:
+```{r}
+fileLocation <- "C:/Users/cbailey/Documents/GitHub/607-Week7-Assignment/03_Books.xml"
+parsed_xml <- xmlParse(file = fileLocation)
+parsed_xml
+```
+
+Load the parsed XML to a dataframe
+```{r}
+xmlToDataFrame(parsed_xml)
+
+```
+
+While this structure does contain all the data, it has all the authors listed in a single element seperated by semicolons. This does not fully take advantage of XML's ability to have each of the individual authors recorded as their own node within a parent node of "Authors". To explore the changes need to accomodate this more complex structure, the next section will use a new XML file where each author is stored is its own node. 
+
+####XML Method2
+Load the updated xml file which now has seperate notes for each author
+```{r}
+fileLocation <- "C:/Users/cbailey/Documents/GitHub/607-Week7-Assignment/04_Books_sep_authors.xml"
+parsed_xml <- xmlParse(file = fileLocation)
+parsed_xml
+```
+
+Try using xmlToDataframe again
+```{r}
+xmlToDataFrame(parsed_xml)
+
+```
+
+While this technically did load the data to an R dataframe, it changed the structure of the data by collapsing all of the authors into a single "Authors" column. This may not have been ok if during the collasping it had also added an identifable seperator between each author in the final output but it did not.  
+  
+####XML Method3  
+This section will now explore a way to load to a dataframe with each author remaining as a unique element.  
+  
+Load the parsed XML data to a list
+```{r message=FALSE}
+library(plyr)
+book_list <- xmlToList(parsed_xml)
+```
+
+Use unlist, apply functions, and rbind.fill to reshape the data and load into a dataframe. (The rbind.fill is needed to compensate for the varying number of values in the "Authors" nodes.)
+```{r}
+book_unlist <- sapply(book_list, unlist)
+book_df <- do.call("rbind.fill", lapply(lapply(book_unlist, t), data.frame, stringsAsFactors = FALSE))
+book_df
+```
+
+This successsfully loaded the data to a dataframe but does require the cleanup of column names and the removal of the unnecessary attribute columns.  
+  
+Cleanup column names
+```{r}
+names(book_df) <- str_replace_all(names(book_df), "\\.", "_")
+names(book_df) <- str_replace_all(names(book_df), "Authors_", "")
+names(book_df) <- str_replace_all(names(book_df), "_text", "")
+names(book_df) <- str_replace_all(names(book_df), "_3", "_4")
+names(book_df) <- str_replace_all(names(book_df), "_2", "_3")
+names(book_df) <- str_replace_all(names(book_df), "_1", "_2")
+names(book_df) <- str_replace_all(names(book_df), "Author\\b", "Author_1")
+names(book_df)
+```
+
+Drop attribute columns and reorder columns
+```{r message=FALSE}
+col_names <- names(book_df)
+attr_cols <-str_detect(col_names, "attr")
+book_df <- book_df[,!attr_cols]
+
+library(dplyr)
+book_df <- book_df %>% select(Title
+                   ,Author_1
+                   ,Author_2
+                   ,Author_3
+                   ,Author_4
+                   ,Number_of_Pages
+                   ,Publish_Year)
+book_df
+
+```
+This method was able to load the XML data to a dataframe and maintain each author as a seperate element. However, this is a strong example where it may have been better to load the data to multiple dataframes or other R objects rather force it into a single dataframe.
+
+
+##JSON
+This seciton makes use of the RJSONIO package and assumes that package has been installed.
+
+Load and parse the JSON file:
+```{r}
+library(RJSONIO)
+fileLocation <- "C:/Users/cbailey/Documents/GitHub/607-Week7-Assignment/05_Books.json"
+parsed_json <- fromJSON(content = fileLocation)
+parsed_json
+```
+
+The structure of the JSON file and how it is parsed into R is similar enough that only slight modifications to the above XML method3 are needed to load the JSON file to an R dataframe.  
+  
+Again, use unlist, apply functions, and rbind.fill to reshape the data and load into a dataframe. (The rbind.fill is needed to compensate for the varying number of values in the "Authors" nodes.)
+```{r}
+book_list <- parsed_json
+book_unlist <- sapply(book_list[[1]], unlist)
+book_df <- do.call("rbind.fill", lapply(lapply(book_unlist, t), data.frame, stringsAsFactors = FALSE))
+book_df
+
+```
+
+This successsfully loaded the data to a dataframe but does require the cleanup of column names. However, unlike XML there are no attribute columns needing to be removed. 
+  
+Cleanup column names
+```{r}
+names(book_df) <- str_replace_all(names(book_df), "\\.", "_")
+names(book_df) <- str_replace_all(names(book_df), "Authors_", "")
+names(book_df) <- str_replace_all(names(book_df), "_3", "_4")
+names(book_df) <- str_replace_all(names(book_df), "_2", "_3")
+names(book_df) <- str_replace_all(names(book_df), "_1", "_2")
+names(book_df) <- str_replace_all(names(book_df), "Author\\b", "Author_1")
+names(book_df)
+```
+
+Drop attribute columns and reorder columns
+```{r message=FALSE}
+col_names <- names(book_df)
+attr_cols <-str_detect(col_names, "attr")
+book_df <- book_df[,!attr_cols]
+
+library(dplyr)
+book_df <- book_df %>% select(Title
+                   ,Author_1
+                   ,Author_2
+                   ,Author_3
+                   ,Author_4
+                   ,Number_of_Pages
+                   ,Publish_Year)
+book_df
+
+```
+This method was able to load the JSON data to a dataframe and maintain each author as a seperate element. However, like the XML example, this case shows it may have been better to load the data to multiple dataframes or other R objects rather force it into a single dataframe.
+
+##Conclusions
+Ultimately, it was possible to produce the same dataframe from all three source files (.html, .xml, and .json). However, it became clear that in cases where the number of records within a variable was not a constant, the file types of .xml or .json more naturally accomodated that situation. Additionally, this assignment reaffirmed that in some cases it may be better to break to break a dataset apart to be stored across multiple dataframes to allow for more tidy tables.
+
+
+
+
+
+
+

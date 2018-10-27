@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/431707/69563a86d1ad4ea7a197d8f9e9c9661c
+bundleId: https://api.rpubs.com/api/v1/document/431707/69563a86d1ad4ea7a197d8f9e9c9661c
+url: http://rpubs.com/c_bailey/431707
+when: 1540176646.98138

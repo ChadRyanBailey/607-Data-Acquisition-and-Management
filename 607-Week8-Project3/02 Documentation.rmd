@@ -1,0 +1,138 @@
+---
+title: "Project 3 Documentation"
+author: "Chad Bailey, Mike Groysman, Zach Herold, Stephanie Roark"
+date: "10/21/2018"
+output: 
+    html_document:
+        toc: true
+        toc_depth: 3
+---
+
+##Data Science Skills
+
+####W. Edwards Deming said, “In God we trust, all others must bring data.” Please use data to answer the question,“Which are the most valued data science skills?” 
+
+
+####Team : Chad Bailey, Mike Groysman, Zach Herold, Stephanie Roark
+
+###1. Collaboration and Analysis Tools
+
+a. Slack used for general communication.
+b. GitHub used for storing and sharing files, articles, and scripts. 
+c. Rpubs used to publish documentation and presentation.
+d. Google Drive used to share articles and project information.
+e. web scraping tool (http://www.kimberlycoffey.com/blog/2016/10/web-scraping-in-r)
+f. json tool (https://jsonformatter.org/)
+        
+    
+###2. Project Kickoff
+
+We began by considering many different sources and approachs to answering the question : What are the most valued data sciense skills? We read articles which incorporated some of the intangible or soft skills which make a data scientist so valuable. We looked at data representing technical and soft skills, comparing the different perspectives for the kinds of skill sets. And we considered articles representing business value delivered by data scientists. Below are the articles from our research:
+        
+    a. https://www.kdnuggets.com/2016/05/10-must-have-skills-data-scientist.html
+    b. http://www.aplu.org/members/commissions/food-environment-and-renewable-resources/CFERR_Library/comparative-analysis-of-soft-skills-what-is-important-for-new-graduates/File
+    c. https://blog.udacity.com/2014/11/data-science-job-skills.html
+    d. http://www.dataversity.net/data-science-survey-essential-skills-for-successful-data-analytics/
+    e. http://customerthink.com/skill-based-approach-to-improve-the-practice-of-data-science/
+    f. https://www.cio.com/article/3263790/data-science/the-essential-skills-and-traits-of-an-expert-data-scientist.html
+    g. https://blog.linkedin.com/2018/january/11/linkedin-data-reveals-the-most-promising-jobs-and-in-demand-skills-2018
+    h. https://www.glassdoor.com/blog/data-scientist-research/
+    i. https://www.mastersindatascience.org/data-scientist-skills/
+    j. https://www.businessinsider.com/best-resume-skills-list-linkedin-jobs-2018-4
+    k. https://www.martechadvisor.com/articles/data-management/top-skills-to-look-for-in-a-data-scientist/
+    l. https://www.sharpsightlabs.com/blog/data-science-skill/
+    m. https://nycdatascience.com/blog/student-works/web-scraping/web-scraping-glassdoor-exploring-the-data-science-job-market/
+    n. https://www.reddit.com/r/datascience/comments/8wmgu3/top_100_data_science_skills_scraped_from/
+    o. https://www.kaggle.com/sl6149/data-scientist-job-market-in-the-us
+    p. https://www.stitchdata.com/resources/the-state-of-data-science/?thanks=true
+    q. https://towardsdatascience.com/the-most-in-demand-skills-for-data-scientists-4a4a8db896db
+    r. https://towardsdatascience.com/what-are-the-skills-needed-to-become-a-data-scientist-in-2018-d037012f1db2
+
+###3. Data Collected
+
+We chose data from 3 sources: a chart representing the Top 20 Data Science Skills, two kaggle datasets representing data pulled from job postings, and data scraped from the web (Indeed) concerning skills of data scientists. We decided on these datasets because they were based on the data sources which where  gathered from job postings and had specific skills listed. While there are many good articles concerning the more general/intangible skills, those are more esocteric and difficult to analzye and often not based on a dataset. 
+    
+a. HTML converted to JSON file, converted to CSV using R
+    -  December 2015 Chart describing Top 20 Skills of a Data Scientist originated in an article on smartdatacollective.com which referred to another article called The State Of Data Science on stitchdata.com. The data to create the chart was gathered by analyzing the profiles of over 11,000 self-identified data scientists, looking at 245,000 skill records.The resulting dataset read into R from the scraped json file is a .csv with 20 rows and 2 columns. The chart describes the top 20 skills by percentile ranking and can be found here: https://s3.amazonaws.com/com.stitchdata.ops.assets/benchmark/stitch-data-science/fig_10.html
+        
+b. CSV’s files from Kaggle: The Most in Demand Skills for Data Scientists by Jeff Hale
+    - Kaggle dataset 1 ds_job_listing_technology: This October 2018 dataset is a list of technology mentioned in joblistings on LinkedIn, Indeed, SimplyHired, and Monster.The data is in .csv form and contains 44 rows and 12 columns.  https://www.kaggle.com/discdiver/ds-job-listing-technology
+    - Kaggle dataset 2 Data Scientist General Skills 2018 Revised: This October 2018 dataset is a list of general skills listed for Data Science jobs listed on LinkedIn, Indeed, Simply Hired, and Monster. The dataset is a .csv with 30 rows and 5 columns. https://www.kaggle.com/discdiver/data-scientist-general-skills-2018-revised
+            
+c. skills.csv: This list of skills was scraped from current job postings listed on Indeed using python web scraping code. The dataset is a .csv with 8 columns and 61,808 rows.
+     
+###4. How data was collected/validated/checked for accuracy
+
+a. In order to validate the chosen datasets, we attempted our own exploratory analysis to confirm our data using Python to scrape Indeed, but for most of the sites used in the kaggle datasets, etc., it was difficult to gain access to the data. We did obtain a jobs skills dataset from Indeed for possible use in validating our findings.
+    
+b. We also validated our data by going directly to LinkedIn and Indeed and searching the key words to see if we would get similar results. Checking some of the keywords produced results similar to the datasets.  For example, if you search for data scientist+python you will get 10,111 results; R will get you 5,871; SQL 6,537; Hadoop 3,948; spark 3536; java 4,938; Phd 6,556; math 11,780; statistics 9,780 communication 18,816. Curious that of 31,628 Data Scientist openings only ~60% of data scientists jobs require communication skills!! 
+    
+     
+###5. MySQL Schema - tables exported to github
+
+The tables were loaded into MySQL and then exported to a dump file which was added to github. In addition, sql file was created to load the tables into MySql.
+
+a. Table1 holds HTML/JSON CSV data (df20ssv.csv)
+b. Table2 holds Kaggle dataset 1 (ds_general_skills_revisted.csv)
+c. Table3 holds Kaggle dataset 2 )df_job_listing_software.csv)
+d. Table4 holds skills.csv
+e. Export of tables
+f. ER diagram from MySQL Workbench
+    
+###6. Analysis 
+
+a. Exploratory Data Analysis  
+    
+    The data in the form of .csv files were loaded from github. Packages were libraried to perform tidying and analysis include: stringr, dplyr, tidyr, Hmisc, and ggplot2. 
+    
+    - The first file ds_user_profiles_skills was cleaned up by making all the skills look uniform and then relabeling the technical skills vs the general skills. 
+    - For the second file, ds_jp_n_postings, analysis begins with collecting the total number of job postings by job site, removing the commas, and changing to an integer. Then the relevant rows are selected and classified as General Skills to match up with the first data set.
+    - The same cleanup and reclassification is performed on the third dataset, ds_job_postings_software, with the skills being classified as Software/Language Skill.
+    - Next the job postings datasets are joined, columns renamed and strings cleaned up. This job postings dataset is then changed from wide to long form and cleanup performed on the number of records to remove commas and change to an integer.
+    - The percent of job postings listing that skill is added to the job postings dataset.
+    - The top skills are then reduced by defining them as being listed in more than 50% of postings across sites.
+    - This list is reviewed for the frequency across sites and the order within sites to validate stability across the job sites.
+    - Finally we look at the top skills listed by data scientists arranged by percentage.
+
+b. Visualizations
+
+    - Scatter plot of Data Scientist User Profile Skills vs Data Science Job Posting Skills
+    - Bar graph of the top 20 skills listed on Data Science Profiles
+    - Bar graph of top 20 skills from job postings (averaged across sites)
+
+c. Conclusions
+    
+    Upon comparison of the most valued data science skills as seen in job postings and user profiles, the top skills are Data Analysis, R, Python, Machine Learining, Statistics, and SQL. The bar graph shows that there is a good mix of general skills with software/language skills. When we take the average of the skills across all the job sites, computer science joins the list of most valued data science skills. It comes as no surprise then that these most valued skills are the ones we are learning in the CUNY MSDS program. One skill that has not been mentioned that we have found to be invaluable while working on Project 3 is communication. Learning to work together to plan and execute Project 3 across many time zones has been an interesting challenge and we have all learned invaluable lessons. 
+    
+###7. Presentation
+- Motivation
+- Approach
+- Findings
+    
+###8. Deliverables
+a. SQL code
+b. R, Python code
+c. Analysis 
+d. Documentation
+e. Presentation
+    
+
+Grading Rubric for project 3: 
+
+(1)  There should be a minimum of two presenters for each team. 
+
+(2) Presentation length should not exceed 5 minutes.  Please rehearse as a team!  Any presentation that exceeds 7 minutes in length will automatically have 50% deducted. 
+
+(3) Each presentation should minimally include a brief description of the data sources used, the role of each contributing team member, your description of the question being answered, and your conclusions based on your analysis of the data.  The best presentations will also include a description of challenges that you encountered, and recommendations for further analysis going forward.
+
+In addition:
+
+ You will need to determine what tool(s) you’ll use as a group to effectively collaborate, share code and any project documentation (such as motivation, approach, findings).
+ You will have to determine what data to collect, where the data can be found, and how to load it.
+ The data that you decide to collect should reside in a relational database, in a set of normalized tables.
+ You should perform any needed tidying, transformations, and exploratory data analysis in R.
+ Your deliverable should include all code, results, and documentation of your motivation, approach, and findings.
+ As a group, you should appoint (at least) three people to lead parts of the presentation.
+ While you are strongly encouraged (and will hopefully find it fun) to try out statistics and data models, your grade will not be affected by the statistical analysis and modeling performed (since this is a semester one course on Data Acquisition and Management).
+ Every student must be prepared to explain how the data was collected, loaded, transformed, tidied, and
+analyzed for outliers, etc. in our Meetup. This is the only way I’ll have to determine that everyone actively participated in the process, so you need to hold yourself responsible for understanding what your class-size team did! If you are unable to attend the meet up, then you need to either present to me one-on-one before the meetup presentation, or post a 3 to 5 minute video (e.g. on YouTube) explaining the process. Individual students will not be responsible for explaining any forays into statistical analysis, modeling, data mining, regression, decision trees, etc.
