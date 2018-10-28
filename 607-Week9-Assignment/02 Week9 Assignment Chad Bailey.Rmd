@@ -1,0 +1,48 @@
+---
+title: "607 Week9 Assignment"
+author: "Chad Bailey"
+date: "October 28, 2018"
+output: html_document
+---
+
+```{r}
+
+# load necessary supporting packages
+library(httr)
+library(plyr)
+
+# get the parts of the api request
+url_base <-'http://api.nytimes.com/svc/semantic/v2/geocodes/'
+query_header <- '/query.json?'
+query_condition1 <- 'country_code=US'
+api_key_header <- "api_key="
+api_key <- readLines('C:/Users/cbailey/Desktop/CUNY MSDS/607 Data Aquisition and Management/Week9/nytimes_api_key.csv')
+
+# construct api request and stored the results
+response <- GET(paste(url_base
+                      ,query_header
+                      ,query_condition1
+                      ,'&'
+                      ,api_key_header
+                      ,api_key
+                      ,sep = ''))
+ 
+# parse the api results
+response_parsed <- content(response, "parse")
+
+# element 4 of the parsed results contains the data of interest
+# unlist element 4, which produces a list of lists
+unlisted <- sapply(response_parsed[[4]], unlist)
+
+# transpose each of the second-layer lists
+unlisted_trans <- lapply(unlisted, t)
+
+# load each of the transposed second-layer lists as dataframes
+dfs <- lapply(unlisted_trans , data.frame , stringsAsFactors = FALSE)
+
+# bind the individual dataframes (records) together as a single dataframe 
+# filling in any missing values with NA
+df_response <- rbind.fill(dfs)
+df_response
+
+```
