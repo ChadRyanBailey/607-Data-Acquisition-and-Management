@@ -129,9 +129,16 @@ $(document).ready(function () {
 </div>
 
 
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>This assignment explores the process of using web APIs to aquire data and then load that data into an R dataframe.</p>
+</div>
+<div id="get-the-data" class="section level2">
+<h2>Get the data</h2>
 <pre class="r"><code># load necessary supporting packages
 library(httr)
 library(plyr)
+library(dplyr)
 
 # get the parts of the api request
 url_base &lt;-'http://api.nytimes.com/svc/semantic/v2/geocodes/'
@@ -165,154 +172,75 @@ dfs &lt;- lapply(unlisted_trans , data.frame , stringsAsFactors = FALSE)
 # bind the individual dataframes (records) together as a single dataframe 
 # filling in any missing values with NA
 df_response &lt;- rbind.fill(dfs)
-df_response</code></pre>
-<pre><code>##    concept_id                    concept_name geocode_id geoname_id
-## 1       24012            Charlottesville (Va)       2840    4752031
-## 2       28132               Philadelphia (Pa)        436    4560349
-## 3       28848 San Juan National Forest (Colo)       7240    5437675
-## 4       27356                Nantucket (Mass)       1312    4944903
-## 5       71052                   Yamhill (Ore)       8680    5761959
-## 6       27744                      Ohio River       3916    4401696
-## 7       23236                   Bellport (NY)       5036    5108714
-## 8       29164              Sleepy Hollow (NY)       4340    5138371
-## 9       28872                 Sandwich (Mass)       4736    4950191
-## 10      27500                New Orleans (La)        148    4335045
-## 11      24148                    Clifton (NJ)       4140    5096699
-## 12      23036                  Baltimore (Md)        776    4347778
-## 13      27416                        Nebraska        700    5073708
-## 14      24980                Fish Creek (Wis)       6444    5253132
-## 15      70316                     Elmira (NY)       8556    5116497
-## 16      70296                  Danbury (Conn)       8352    4832353
-## 17      30028                         Vermont        452    5242283
-## 18      27360                    Napa (Calif)       1704    5376095
-## 19      30148                    Warwick (NY)       7516    5143285
-## 20      68128                   Newport (Ore)       7900    5742750
-##                        name  latitude   longitude elevation population
-## 1           Charlottesville 38.029306  -78.476678       142      34703
-## 2              Philadelphia 39.952335  -75.163789        12    1517550
-## 3  San Juan National Forest 37.691664 -107.808954      3472       &lt;NA&gt;
-## 4                 Nantucket 41.283456   -70.09946        13      14775
-## 5                   Yamhill 45.341504 -123.187329        60       1024
-## 6                Ohio River 36.986719  -89.130625        87       &lt;NA&gt;
-## 7                  Bellport 40.757043  -72.939273         8       2377
-## 8             Sleepy Hollow 41.085652  -73.858468        27       9286
-## 9                  Sandwich 41.758995  -70.493916         4      34886
-## 10              New Orleans 29.954648  -90.075072      &lt;NA&gt;     484674
-## 11                  Clifton 40.858433  -74.163755        57      80245
-## 12                Baltimore 39.290385  -76.612189        10     610892
-## 13                 Nebraska 41.500283  -99.750674       817    1757399
-## 14               Fish Creek 45.127767  -87.247053       184       &lt;NA&gt;
-## 15                   Elmira 42.089797  -76.807734       260      29200
-## 16                  Danbury 41.394817  -73.454011       121      80893
-## 17                  Vermont 44.000342  -72.749831       271     624501
-## 18                     Napa 38.297137 -122.285529         6      77015
-## 19                  Warwick 41.256483  -74.359875       158       6618
-## 20                  Newport 44.636784  -124.05345        42       9515
-##    country_code  country_name admin_code1 admin_code2   admin_name1
-## 1            US United States          VA         540      Virginia
-## 2            US United States          PA         101  Pennsylvania
-## 3            US United States          CO         111      Colorado
-## 4            US United States          MA         019 Massachusetts
-## 5            US United States          OR         071        Oregon
-## 6            US United States          MO         133      Missouri
-## 7            US United States          NY         103      New York
-## 8            US United States          NY         119      New York
-## 9            US United States          MA         001 Massachusetts
-## 10           US United States          LA         071     Louisiana
-## 11           US United States          NJ         031    New Jersey
-## 12           US United States          MD         510      Maryland
-## 13           US United States          NE        &lt;NA&gt;      Nebraska
-## 14           US United States          WI         029     Wisconsin
-## 15           US United States          NY         015      New York
-## 16           US United States          CT         001   Connecticut
-## 17           US United States          VT        &lt;NA&gt;       Vermont
-## 18           US United States          CA         055    California
-## 19           US United States          NY         071      New York
-## 20           US United States          OR         041        Oregon
-##                admin_name2 feature_class feature_code
-## 1  City of Charlottesville             P          PPL
-## 2      Philadelphia County             P          PPL
-## 3          San Juan County             V         FRST
-## 4         Nantucket County             P          PPL
-## 5           Yamhill County             P          PPL
-## 6       Mississippi County             H          STM
-## 7           Suffolk County             P          PPL
-## 8       Westchester County             P          PPL
-## 9                 Cape Cod             P          PPL
-## 10          Orleans Parish             P          PPL
-## 11          Passaic County             P          PPL
-## 12       City of Baltimore             P          PPL
-## 13                    &lt;NA&gt;             A         ADM1
-## 14             Door County             P          PPL
-## 15          Chemung County             P        PPLA2
-## 16        Fairfield County             P          PPL
-## 17                    &lt;NA&gt;             A         ADM1
-## 18             Napa County             P          PPL
-## 19           Orange County             P          PPL
-## 20          Lincoln County             P          PPL
-##                                 feature_code_name
-## 1                                 populated place
-## 2                                 populated place
-## 3                                       forest(s)
-## 4                                 populated place
-## 5                                 populated place
-## 6                                          stream
-## 7                                 populated place
-## 8                                 populated place
-## 9                                 populated place
-## 10                                populated place
-## 11                                populated place
-## 12                                populated place
-## 13            first-order administrative division
-## 14                                populated place
-## 15 seat of a second-order administrative division
-## 16                                populated place
-## 17            first-order administrative division
-## 18                                populated place
-## 19                                populated place
-## 20                                populated place
-##                      time_zone_id dst_offset gmt_offset
-## 1                America/New_York         -4         -5
-## 2                America/New_York         -4         -5
-## 3                America/Shiprock         -6         -7
-## 4                America/New_York         -4         -5
-## 5             America/Los_Angeles         -7         -8
-## 6            America/Indiana/Knox         -5         -6
-## 7                America/New_York         -4         -5
-## 8                America/New_York         -4         -5
-## 9                America/New_York         -4         -5
-## 10                America/Chicago         -5         -6
-## 11               America/New_York         -4         -5
-## 12               America/New_York         -4         -5
-## 13 America/North_Dakota/New_Salem         -5         -6
-## 14              America/Menominee         -5         -6
-## 15               America/New_York         -4         -5
-## 16               America/New_York         -4         -5
-## 17               America/New_York         -4         -5
-## 18            America/Los_Angeles         -7         -8
-## 19               America/New_York         -4         -5
-## 20            America/Los_Angeles         -7         -8
-##             geocodes_created          geocodes_updated
-## 1  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 2  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 3  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 4  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 5  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 6  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 7  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 8  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 9  2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 10 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 11 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 12 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 13 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 14 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 15 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 16 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 17 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 18 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 19 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00
-## 20 2013-02-25 15:10:12-05:00 2013-02-25 15:10:12-05:00</code></pre>
+
+#check names of the database columns
+names(df_response)</code></pre>
+<pre><code>##  [1] &quot;concept_id&quot;        &quot;concept_name&quot;      &quot;geocode_id&quot;       
+##  [4] &quot;geoname_id&quot;        &quot;name&quot;              &quot;latitude&quot;         
+##  [7] &quot;longitude&quot;         &quot;elevation&quot;         &quot;population&quot;       
+## [10] &quot;country_code&quot;      &quot;country_name&quot;      &quot;admin_code1&quot;      
+## [13] &quot;admin_code2&quot;       &quot;admin_name1&quot;       &quot;admin_name2&quot;      
+## [16] &quot;feature_class&quot;     &quot;feature_code&quot;      &quot;feature_code_name&quot;
+## [19] &quot;time_zone_id&quot;      &quot;dst_offset&quot;        &quot;gmt_offset&quot;       
+## [22] &quot;geocodes_created&quot;  &quot;geocodes_updated&quot;</code></pre>
+<pre class="r"><code>#tidy the data
+df_response_slim &lt;- df_response %&gt;% 
+  mutate(longitude = as.numeric(longitude)
+         ,latitude = as.numeric(latitude)
+         ,population = as.numeric(population)) %&gt;%
+  rename(state_code = admin_code1) %&gt;%
+  select (state_code, name, latitude, longitude)
+
+df_response_slim</code></pre>
+<pre><code>##    state_code                     name latitude  longitude
+## 1          VA          Charlottesville 38.02931  -78.47668
+## 2          PA             Philadelphia 39.95233  -75.16379
+## 3          CO San Juan National Forest 37.69166 -107.80895
+## 4          MA                Nantucket 41.28346  -70.09946
+## 5          OR                  Yamhill 45.34150 -123.18733
+## 6          MO               Ohio River 36.98672  -89.13062
+## 7          NY                 Bellport 40.75704  -72.93927
+## 8          NY            Sleepy Hollow 41.08565  -73.85847
+## 9          MA                 Sandwich 41.75899  -70.49392
+## 10         LA              New Orleans 29.95465  -90.07507
+## 11         NJ                  Clifton 40.85843  -74.16375
+## 12         MD                Baltimore 39.29039  -76.61219
+## 13         NE                 Nebraska 41.50028  -99.75067
+## 14         WI               Fish Creek 45.12777  -87.24705
+## 15         NY                   Elmira 42.08980  -76.80773
+## 16         CT                  Danbury 41.39482  -73.45401
+## 17         VT                  Vermont 44.00034  -72.74983
+## 18         CA                     Napa 38.29714 -122.28553
+## 19         NY                  Warwick 41.25648  -74.35988
+## 20         OR                  Newport 44.63678 -124.05345</code></pre>
+</div>
+<div id="plot-the-geographic-points" class="section level2">
+<h2>Plot the Geographic Points</h2>
+<pre class="r"><code>#load libraries needed for map plotting
+library(ggplot2)
+library(ggmap)
+
+# load the USA states outlines
+states &lt;- map_data(&quot;state&quot;)
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, group = group)
+                 , fill = &quot;lightblue&quot;
+                 , color = &quot;black&quot;) + 
+  
+  coord_fixed(1.3) +      #adjusting scales for proper display
+    guides(fill=FALSE) +  #turn off color legends
+  theme_nothing() +       #turn off grid and axes
+  geom_point(data = df_response_slim
+             , aes(x = longitude, y = latitude)
+             , color = &quot;red&quot;
+             , size = 2)  #add api geo points</code></pre>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAAADFBMVEUAAACt2Ob/AAD///9x8CF3AAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO2d2YLjKAwAnen//+fd7vjANwgJybjqYXemO0ZChgq2SWb4AQAAEYN3AgAATwWBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBAoAIASBAgAIQaAAAEIQKACAEAQKACAEgQIACEGgAABCECgAgBAECgAgBIECAAhBoAAAQhAoAIAQBApPYvjDOwuAEcYiPIdhxjsTgD8YifAchuHzCwKFKDAS4TmMAv0gUAgCIxGeAwKFYDAS4TkgUAgGIxGeAwKFYDAS4TlMAsWgEAQGIjwHBArBYCDCc0Cg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" width="672" /></p>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>This project demonstrated one method of acquiring web API data and a rather simple way to load it into an R dataframe.</p>
+<p>Lastly, since the data acquired was geographic data, the information was plotted on a map of the USA.</p>
+</div>
 
 
 

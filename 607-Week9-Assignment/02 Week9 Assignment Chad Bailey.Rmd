@@ -2,14 +2,18 @@
 title: "607 Week9 Assignment"
 author: "Chad Bailey"
 date: "October 28, 2018"
-output: html_document
 ---
 
-```{r}
+##Overview
+This assignment explores the process of using web APIs to aquire data and then load that data into an R dataframe.
+
+## Get the data
+```{r message=FALSE}
 
 # load necessary supporting packages
 library(httr)
 library(plyr)
+library(dplyr)
 
 # get the parts of the api request
 url_base <-'http://api.nytimes.com/svc/semantic/v2/geocodes/'
@@ -43,6 +47,52 @@ dfs <- lapply(unlisted_trans , data.frame , stringsAsFactors = FALSE)
 # bind the individual dataframes (records) together as a single dataframe 
 # filling in any missing values with NA
 df_response <- rbind.fill(dfs)
-df_response
+
+#check names of the database columns
+names(df_response)
+
+#tidy the data
+df_response_slim <- df_response %>% 
+  mutate(longitude = as.numeric(longitude)
+         ,latitude = as.numeric(latitude)
+         ,population = as.numeric(population)) %>%
+  rename(state_code = admin_code1) %>%
+  select (state_code, name, latitude, longitude)
+
+df_response_slim
 
 ```
+
+
+
+##Plot the Geographic Points
+```{r message=FALSE, warning=FALSE}
+
+#load libraries needed for map plotting
+library(ggplot2)
+library(ggmap)
+
+# load the USA states outlines
+states <- map_data("state")
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, group = group)
+                 , fill = "lightblue"
+                 , color = "black") + 
+  
+  coord_fixed(1.3) +      #adjusting scales for proper display
+    guides(fill=FALSE) +  #turn off color legends
+  theme_nothing() +       #turn off grid and axes
+  geom_point(data = df_response_slim
+             , aes(x = longitude, y = latitude)
+             , color = "red"
+             , size = 2)  #add api geo points
+
+```
+
+##Conclusions
+This project demonstrated one method of acquiring web API data and a rather simple way to load it into an R dataframe. 
+
+Lastly, since the data acquired was geographic data, the information was plotted on a map of the USA.
+
+
+
