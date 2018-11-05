@@ -1,0 +1,32 @@
+<?xml version = "1.0"?>
+<Books>
+    <book id = "1">    
+        <Title>R for Everyone</Title>       
+        <Authors>
+            <Author id = "1">Jared P. Lander</Author>
+        </Authors>           
+        <Number_of_Pages>464</Number_of_Pages>
+        <Publish_Year>2013</Publish_Year>
+    </book>
+    <book id = "2">    
+        <Title>Automated Data Collection with R</Title>       
+        <Authors>
+            <Author id = "1">Simon Munzert</Author>
+            <Author id = "2">Christian Rubba</Author>
+            <Author id = "3">Peter Meibner</Author>
+            <Author id = "4">Dominic Nyhuis</Author>
+        </Authors>           
+        <Number_of_Pages>474</Number_of_Pages>
+        <Publish_Year>2015</Publish_Year>
+    </book>
+    <book id = "3">    
+        <Title>Sams Teach Yourself R</Title>       
+        <Authors>
+            <Author id = "1">Andy Nicholls</Author>
+            <Author id = "2">Richard Pugh</Author>
+            <Author id = "3">Aimee Gott</Author>
+        </Authors>         
+        <Number_of_Pages>624</Number_of_Pages>
+        <Publish_Year>2015</Publish_Year>
+    </book>
+</Books>
