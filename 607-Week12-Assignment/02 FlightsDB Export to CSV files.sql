@@ -31,7 +31,7 @@ USE flights2;
 			FROM airports;
             
 	-- flights.flights
-		SELECT 'Year', 'Month', 'Day', 'Dep_Time', 'Dep_Delay', 'arr_Time', 'arr_Delay', 'Carrier', 
+		SELECT 'Year', 'Month', 'Day', 'Dep_Time', 'Dep_Delay', 'Arr_Time', 'arr_Delay', 'Carrier', 
 				'TailNum', 'Flight', 'Origin', 'Dest', 'Air_Time', 'Distance', 'Hour', 'Minute'
 		UNION SELECT * 
 			INTO OUTFILE 
@@ -41,7 +41,9 @@ USE flights2;
 				ESCAPED BY '\\'
 				LINES TERMINATED BY '\n'
 			FROM flights;
-            
+ 
+ 
+ /*
 	-- flights.planes
 		SELECT 'TailNum', 'Year', 'Type', 'Manufacturer', 'Model', 'Engine', 'Seats', 'Speed', 'Engine'
 		UNION SELECT * 
@@ -52,7 +54,7 @@ USE flights2;
 				ESCAPED BY '\\'
 				LINES TERMINATED BY '\n'
 			FROM planes;
-    /*        
+	
 	-- flights.weather
 		SELECT 'Origin', 'Year', 'Month', 'Day', 'Hour', 'Temp', 'DewP', 'Humid', 
 				'Wind_Dir', 'Wind_Speed', 'Wind_Gust', 'Precip', 'Pressure', 'Visib'
