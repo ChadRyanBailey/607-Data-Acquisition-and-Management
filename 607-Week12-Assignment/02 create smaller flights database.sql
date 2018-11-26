@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS flights2.flights;
 CREATE TABLE flights2.flights
 SELECT * 
     FROM flights.flights
-    limit 50;
+    limit 20;
     
 
  -- limit to airports connected to the flights sample  
@@ -25,7 +25,8 @@ SELECT DISTINCT airlines.*
     INNER JOIN flights2.flights flights
 		ON flights.carrier = airlines.carrier;     
         
-    
+        
+/* removed to reduce scope of the project
 -- limit to planes connected to the flights sample   
 DROP TABLE IF EXISTS flights2.planes;
 CREATE TABLE flights2.planes
@@ -34,7 +35,7 @@ SELECT DISTINCT planes.*
     INNER JOIN flights2.flights flights
 		ON flights.tailnum = planes.tailnum     
         
-        
+*/
     
     
     
