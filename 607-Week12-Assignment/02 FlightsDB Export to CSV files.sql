@@ -1,6 +1,6 @@
 
 
-USE flights;
+USE flights2;
 
 
 -- get the folder where files must be uploaded/downloaded under MySQLs new security settings
@@ -12,7 +12,7 @@ USE flights;
 		SELECT 'Carrier', 'Name'
 		UNION SELECT * 
 			INTO OUTFILE 
-			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data 607/Flights Export/airlines.csv'
+			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data_607/flights_export/airlines.csv'
 				FIELDS TERMINATED BY ',' 
 				OPTIONALLY ENCLOSED BY '"'
 				ESCAPED BY '\\'
@@ -23,7 +23,7 @@ USE flights;
 		SELECT 'FAA', 'Name', 'Lat', 'Lon', 'Alt', 'TZ', 'Dst'
 		UNION SELECT * 
 			INTO OUTFILE 
-			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data 607/Flights Export/airports.csv'
+			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data_607/flights_export/airports.csv'
 				FIELDS TERMINATED BY ',' 
 				OPTIONALLY ENCLOSED BY '"'
 				ESCAPED BY '\\'
@@ -35,7 +35,7 @@ USE flights;
 				'TailNum', 'Flight', 'Origin', 'Dest', 'Air_Time', 'Distance', 'Hour', 'Minute'
 		UNION SELECT * 
 			INTO OUTFILE 
-			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data 607/Flights Export/flights.csv'
+			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data_607/flights_export/flights.csv'
 				FIELDS TERMINATED BY ',' 
 				OPTIONALLY ENCLOSED BY '"'
 				ESCAPED BY '\\'
@@ -46,13 +46,13 @@ USE flights;
 		SELECT 'TailNum', 'Year', 'Type', 'Manufacturer', 'Model', 'Engine', 'Seats', 'Speed', 'Engine'
 		UNION SELECT * 
 			INTO OUTFILE 
-			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data 607/Flights Export/planes.csv'
+			'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/Data_607/flights_export/planes.csv'
 				FIELDS TERMINATED BY ',' 
 				OPTIONALLY ENCLOSED BY '"'
 				ESCAPED BY '\\'
 				LINES TERMINATED BY '\n'
 			FROM planes;
-            
+    /*        
 	-- flights.weather
 		SELECT 'Origin', 'Year', 'Month', 'Day', 'Hour', 'Temp', 'DewP', 'Humid', 
 				'Wind_Dir', 'Wind_Speed', 'Wind_Gust', 'Precip', 'Pressure', 'Visib'
@@ -64,7 +64,7 @@ USE flights;
 				ESCAPED BY '\\'
 				LINES TERMINATED BY '\n'
 			FROM weather;
-			
+		*/	
 
 
     
