@@ -1,0 +1,105 @@
+---
+title: "TidyVerse Assignment"
+author: "Chad Bailey"
+date: "December 5, 2018"
+output: html_document
+---
+
+##Overview
+In this project we will use one of the college majors datasets from https://github.com/fivethirtyeight/data to show some of the functionality of a few of the "tidyverse" packages, namely dplyr and ggplot2.
+
+The selected dataset includes data on both the number of graduates and the the employment rate by major and major category. This project will explore is whether there is any visible correlation between the rate at which a major is selected and its unemployment rate. (That is, are students choosing major with lower unemployment rates?)
+
+"Recipe" outline:
+
+1. Load the data and any necessary packages
+2. Narrow the dataset by selecting only the applicable columns
+3. Calculate, aggregating by major_category, the count of graduates and the weighted average of unemployment 
+4. Calculate the category's percent of total graduates
+5. Plot category_pct_of_grad vs category_grad_unemployment on a scatterplot
+6. Add color to data points by major_category
+7. Add size to data based on count of major_category
+8. Add linear regression line, suppressing confidence regions
+
+
+#### 1. Load the data and any necessary packages
+```{r message = FALSE} 
+
+#load the necessary "tidyverse" packages
+library(dplyr)
+library(ggplot2)
+
+#load the selected data
+input_file_name <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/grad-students.csv"
+data <- read.csv(input_file_name)
+```
+
+
+## Transform the dataset
+(Please note steps 2-4 could be done as a single shown below. However, for this assignment they done seperately for added clarity.)
+
+####2. Narrow the dataset by selecting only the applicable columns
+
+```{r}
+category_subtotals <- data %>%
+  select(Major_category, Grad_total, Grad_unemployment_rate) 
+```
+
+####3. Add to the transformation aggregates for count of grads and weighted average of unemployment rates
+```{r}
+category_subtotals <- data %>%
+  select(Major_category, Grad_total, Grad_unemployment_rate) %>%
+  group_by(Major_category) %>%  
+  summarise(Category_grad_total = sum(Grad_total)
+            , Category_grad_unemployment_rate = sum(Grad_unemployment_rate * Grad_total) / sum(Grad_total)) 
+```
+
+####4. Add to the transformation each category's percent of total graduates
+```{r}
+category_subtotals <- data %>%
+  select(Major_category, Grad_total, Grad_unemployment_rate) %>%
+  group_by(Major_category) %>%  
+  summarise(Category_grad_total = sum(Grad_total)
+            , Category_grad_unemployment_rate = sum(Grad_unemployment_rate * Grad_total) / sum(Grad_total)) %>%
+  mutate(Category_pct_of_grad = Category_grad_total / sum(data$Grad_total)) 
+```
+
+Output the data, arranging (sorting/ordering) by Category_pct_of_grad (highest to lowest)
+```{r}
+category_subtotals %>% arrange(desc(Category_pct_of_grad))
+```
+
+####5. Plot category_pct_of_grad vs category_grad_unemployment on a scatterplot
+```{r}
+ggplot(category_subtotals, aes(x = Category_pct_of_grad, y = Category_grad_unemployment_rate)) + 
+  geom_point()
+
+```
+
+6. Add color to data points by major_category
+```{r}
+ggplot(category_subtotals, aes(x = Category_pct_of_grad, y = Category_grad_unemployment_rate)) + 
+  geom_point(aes(color = Major_category))
+
+```
+
+7. Add size to data based on count of major_category
+```{r}
+ggplot(category_subtotals, aes(x = Category_pct_of_grad, y = Category_grad_unemployment_rate)) + 
+  geom_point(aes(color = Major_category, size = Category_grad_total))
+
+```
+
+8. Add linear regression line, suppressing confidence regions
+```{r}
+ggplot(category_subtotals, aes(x = Category_pct_of_grad, y = Category_grad_unemployment_rate)) + 
+  geom_point(aes(color = Major_category, size = Category_grad_total)) + 
+  geom_smooth(method=lm, se=FALSE) 
+
+```
+
+
+##Conclusions
+There does not appear to be any meaningful correlation between a major's general job prospects and the rate at which students choose a major.
+
+   
