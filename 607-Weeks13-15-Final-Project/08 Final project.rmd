@@ -1,0 +1,533 @@
+---
+title: "607 Final Project"
+author: "Chad Bailey"
+date: "December 2, 2018"
+---
+
+##Overview
+This is the final project for "607 Data Acquisition and Management". 
+
+I propose to examine the relationship and tensions of correlations of proficiency on state assessments to both the percent of students in poverty as well as the average magnitude of poverty in the surrounding geographic area. The specific measures and geographical unit (county, city, US census tract, etc.) will be dependent on the availability of data and how well that can be merged with educational data.
+
+The motivation for this analysis is primarily to explore a policy question/problem within the field of education. There is a strong, and well documented, correlation between the rate of students in poverty and lower academic outcomes. However, while there has been significant discussion that schools exist within a context of the experiences of their students and the community in which they are located, little study on the impact of community on schools seems to have been done. This would be a start to rectifying that situation.
+
+###Proposed data sources:
+
+1. School, district, and/or Intermediate School District educational data to be pulled from www.mischooldata.org via csv download request
+2. County, city, and/or US census tract information pulled from www.census.gov website APIs
+
+###General Project Plan:
+
+1. Exploring and choosing data sources
+2. Acquire, transform, and clean each dataset
+3. Combine datasets
+4. Analyze the data
+5. Conclusions
+
+###Project Documentation and Notes
+Also data and documentation for this project are available in the GitHub repository: https://github.com/ChadRyanBailey/607-Data-Acquisition-and-Management/tree/master/607-Weeks13-15-Final-Project 
+
+Notes and documentation for the project were maintained in a separate Microsoft Word (.docx) titled "01 Final Project Notes.docx" and is saved in the repo above.
+
+## 1. Exploring and choosing data sources
+The details of which data sources chosen as well as acquisition issues are detailed in the "01 Final Project Notes.docx" document stored in the project's GitHub Repo: https://github.com/ChadRyanBailey/607-Data-Acquisition-and-Management/tree/master/607-Weeks13-15-Final-Project 
+
+In summary, sources for school proficiency on state assessments had to be altered for the sake of data quality. However, the granularity of Census data was better than expected, and included data by geographic districts.
+
+## 2. Acquire, transform, and clean the separate datasets
+### 2.1 Load Michigan proficiency rates on state assessments by school
+```{r message=FALSE}
+
+# load necessary supporting packages
+library(dplyr)
+library(stringr)
+library(httr)
+library(ggplot2)
+
+# load the school proficiency data
+    fileLocation1 <- 'https://raw.githubusercontent.com/ChadRyanBailey/607-Data-Acquisition-and-Management/master/607-Weeks13-15-Final-Project/03%202015-16%20Proficiency%20All%20Tests%2C%20Grades%2C%20Students.csv'
+  
+# option needed to prevent long sequence id numbers from being converted to scientific notation
+    options(scipen = 999)
+    proficiency <-read.csv(fileLocation1, sep = ',')
+    
+# review column names and rename as needed
+    names(proficiency)
+    
+    proficiency <- proficiency %>%
+    rename(nTested = TestedIncluded
+           ,nProf = TestedProficientMet
+           ,nNonProf = TestedNotProficientMet
+           ,PctProf = PercentTestedProficientMet
+           ,PctNonProf = PercentTestedNotProficientMet) 
+    
+    names(proficiency)[1] <- c("AcademicYear")
+
+# review summary of the variables/colummns
+    summary(proficiency)
+    
+```
+As can be seen in the columns {nTested, nProf, PctProf, nNonProf, and PctNonProf}, the file has records that have been suppressed. This is typical for public education data. The suppression is done to protect the privacy of small groups of students.  
+  
+  
+####2.1a Resolve suppressions
+The following section will review the behavior of rows having suppression. Where possible values will be imputed. If no value can be imputed, the record will be dropped.
+```{r}
+# add flags to review each suppression condition
+    proficiency <- proficiency %>%
+      mutate( HasTestedLT10 = ifelse(nTested == '<10', 1, 0)
+              ,HasProfLT3 = ifelse(nProf == '< 3', 1, 0)
+              ,HasNonProfLT3 = ifelse(nNonProf == '< 3', 1, 0)
+              ,HasEitherProfOrNonProfLT3 = ifelse(nProf == '< 3' | nNonProf == '< 3', 1, 0)
+              ,HasRecord = 1)
+
+# get the count of records by suppression conditions
+    proficiency %>%
+      summarise(nTotal = sum(HasRecord)
+                ,nTestedLT10 = sum(HasTestedLT10)
+                ,nProfLT3 = sum(HasProfLT3)
+                ,nNonProfLT3 = sum(HasNonProfLT3)
+                ,nEitherProfOrNonProfLT3 = sum(HasEitherProfOrNonProfLT3))
+```
+
+####2.1b Starting with reocrds with <10 tested students
+```{r}
+# review records for school's flagged as having <10 tested students
+  proficiencySmallSchools <- proficiency %>%
+    filter(nTested == '<10') %>%
+    select(BuildingCode
+           , Subject
+           , nTested 
+           , nProf
+           , PctProf
+           , nNonProf
+           , PctNonProf)
+
+  head(proficiencySmallSchools)
+  
+# drop records for schools with <10 students tested as they are otherwise empty
+  proficiencyCleaned <-
+    anti_join(proficiency
+              , proficiencySmallSchools
+              , by = c('BuildingCode', 'Subject'))
+
+```  
+ 
+As shown in the head of records where the number tested is less than 10, there was no way to impute a value with the given information. Thus, these records were dropped using an anti_join.
+  
+#### 2.1c Moving to records with <3 students Proficient or Non-Proficient
+Since <3 is equal to the set {0, 1, 2}, the middle value "1" will be used as the imputed value. Also, percentages will be calculated for suppressed records using the imputed value.
+```{r messages = FALSE, warning = FALSE}
+
+proficiencyCleaned <- proficiencyCleaned %>%
+    #convet factors to characters
+    mutate(nTested = as.character(nTested)
+           ,nProf = as.character(nProf)
+           ,nNonProf = as.character(nNonProf)
+           ,PctProf = as.character(PctProf)
+           ,PctNonProf = as.character(PctNonProf)
+           ) %>%
+    
+    #convert the characters to numerics
+    mutate(nTested = as.numeric(nTested)
+           ,nProf = as.numeric(nProf)
+           ,nNonProf = as.numeric(nNonProf)
+           ,PctProf = as.numeric(PctProf)
+           ,PctNonProf = as.numeric(PctNonProf)
+           ) %>%
+    
+    # for count variables (nProf and nNonProf) replace the suppression flag with imputed count
+    mutate(nProf = ifelse(HasProfLT3 == 1, 1, nProf)
+           ,nProf = ifelse(HasNonProfLT3 == 1, nTested - 1, nProf)
+
+           ,nNonProf = ifelse(HasNonProfLT3 == 1, 1, nNonProf)
+           ,nNonProf = ifelse(HasProfLT3 == 1, nTested - 1, nNonProf)
+           ) %>%
+
+    # for percentage variables (PctProf and PctNonProf) replace the suppression flag 
+    # with a calucuated percentage using the imputed counts
+    mutate(PctProf = ifelse(HasProfLT3 == 1, round(nProf*1.0/nTested*100.0, 2), PctProf)
+           , PctProf = ifelse(HasNonProfLT3 == 1, round(nProf*1.0/nTested*100.0, 2), PctProf)
+
+           , PctNonProf = ifelse(HasNonProfLT3 == 1, round(nNonProf*1.0/nTested*100.0, 2), PctNonProf)
+           , PctNonProf = ifelse(HasProfLT3 == 1, round(nNonProf*1.0/nTested*100.0, 2), PctNonProf))
+```
+
+####2.1d Re-review the summary to make sure changes occurred as expected
+```{r}
+summary(proficiencyCleaned)
+
+```
+All variables are within the expected ranges are now of the expected types. No more transformations are needed on this data set for now.
+
+
+###2.2 Load Entity Demographics
+```{r}
+# load the school proficiency data
+    fileLocation2 <- 'https://raw.githubusercontent.com/ChadRyanBailey/607-Data-Acquisition-and-Management/master/607-Weeks13-15-Final-Project/04%202015-16%20Entity%20Demographics.csv'
+
+    entityDemog <-read.csv(fileLocation2, sep = ',')
+
+# review column names and rename as needed
+    names(entityDemog)
+
+    entityDemog <- entityDemog %>%
+      rename(AcademicYear = SchoolYear
+           ,nEnrollmentTotal = TOTAL_ENROLLMENT
+           ,nEnrollmentED = ECONOMIC_DISADVANTAGED_ENROLLMENT) %>%
+      select(AcademicYear
+             , ISDCode
+             , DistrictCode
+             , BuildingCode
+             , nEnrollmentTotal
+             , nEnrollmentED)
+    
+# review the summary values for the selected columns
+    summary(entityDemog)
+    
+# transform values as needed
+    entityDemog <- entityDemog %>%
+      mutate(AcademicYear = str_replace_all(AcademicYear, " School Year", "")) %>%
+      mutate(AcademicYear = str_replace_all(AcademicYear, " ", "")) %>%
+      mutate(AcademicYear = paste("20", AcademicYear, sep = "")) %>%
+      mutate(AcademicYear = str_replace_all(AcademicYear, "-", "-20")) %>%
+      mutate(AcademicYear = as.factor(AcademicYear)) %>%
+      
+      filter(nEnrollmentTotal > 0
+             ,!is.na(BuildingCode)) %>%
+      
+      mutate(PctEnrollmentED = round(nEnrollmentED / nEnrollmentTotal *100, 2))
+    
+    summary(entityDemog)
+    
+```
+
+
+###2.3 Load the Entity data
+This data set is needed to bridge the previous two data sets. The US Census data uses district codes set by the National Center for Educational Statistics (NCES) whereas the the Michigan school proficiency data uses district codes set by the state of Michigan. Thankfully both codes are available in Michigan's Educational Enity Master.
+
+```{r}
+
+# load the school proficiency data
+    fileLocation3 <- 'https://raw.githubusercontent.com/ChadRyanBailey/607-Data-Acquisition-and-Management/master/607-Weeks13-15-Final-Project/05%202015-16%20Entity%20Data.txt'
+
+    entity <-read.csv(fileLocation3, sep = '\t')
+
+# review column names and rename as needed
+    names(entity)
+
+    entity <- entity %>%
+      rename(ISDCode = ISD
+           ,Street = Addr1Street
+           ,City = Addr1City
+           ,Zip = Addr1Zip
+           ,GradeList = ActualGradeListSearchable)
+
+    names(entity)[1] <- c("AcademicYear")
+
+# review summary of the variables/colummns
+    summary(entity)
+
+entity %>%
+  filter(is.na(BuildingNCESId))
+```
+There were three entities that were missing an (Operational)[BuildingNCESId] value however, looking into the specific entities, it is somewhat expected that these would not receive federal coding. In any case, each of these records still has a GeographicDistrictNCESId which will be the primary linking id used for this analysis.
+
+
+###2.4 Load the data from US Census using their API
+```{r message=FALSE}
+
+# get the parts of the api request
+  url_base <-"https://api.census.gov/data/"
+  dataset <- "2016/acs/acs5/profile"   #2016 5-year american community survey profiles
+  query_header <- "?get="
+  query_variables <- "DP05_0028E,DP03_0062E,"  #est. num. population, est. median household income
+  geographicGroupings <- "NAME&for=school%20district%20(unified):*&in=state:26" #geographic school districts in MI
+
+
+# construct api request and stored the results
+  response <- GET(paste(url_base
+                        ,dataset
+                        ,query_header
+                        ,query_variables
+                        ,geographicGroupings
+                        ,sep = ""))
+
+# parse the api results
+  response_parsed <- content(response, "parse")
+
+# unlist the data into a matrix and transpose that matrix
+  response_unlisted <- sapply(response_parsed, unlist)
+  response_transpose <- t(response_unlisted)
+
+# load into a data frame
+  # rows 2:end contain data
+    response_df <- data.frame(response_transpose[2:nrow(response_transpose),], stringsAsFactors = FALSE)
+  # row 1 contains column headers
+    names(response_df) <- response_transpose[1,]
+
+#review column headers and rename as needed
+  names(response_df)
+  names(response_df) <- c('TotalPopulation', 'MedianHouseholdIncome', 'DistrictName', 'StateCode', 'DistrictCode_NCES')
+
+#update data types as needed
+  response_df <- response_df %>%
+    mutate(DistrictCode_NCES = paste("00000", DistrictCode_NCES, sep = "")) %>%
+    mutate(DistrictCode_NCES = str_trunc(DistrictCode_NCES, 5, side="left", ellipsis="")) %>%
+    mutate(DistrictCode_NCES = paste(StateCode, DistrictCode_NCES, sep = "")) %>%
+    mutate(TotalPopulation =  as.numeric(TotalPopulation)
+           ,MedianHouseholdIncome = as.numeric(MedianHouseholdIncome)
+           ,DistrictName = as.factor(DistrictName)
+           ,DistrictCode_NCES = as.numeric(DistrictCode_NCES)) 
+
+census <- response_df
+
+
+summary(census)
+head(census)
+
+```
+
+###2.5 Load US poverty line 
+```{r}
+
+library(rJava)
+library(XLConnectJars)
+library(XLConnect)
+
+# method to load .xls file; abondoned as it required a local file 
+# (i.e., will not load a file refereced by URL)
+    # location1 <- 'https://www2.census.gov/programs-surveys/cps/tables/time-series/historical-poverty-thresholds/thresh16.xls'
+    # workbook <- loadWorkbook(location1)
+    # povertyThresholds <- readWorksheet(workbook, sheet = "Sheet1")
+    # povertyThresholds[18,]
+    # povertyThreshold <- str_replace_all(povertyThresholds[18,2], ",", "")
+    # povertyThresholds <- as.numeric(povertyThresholds)
+
+# alternative method, save the file as .csv
+fileLocation4 <- 'https://raw.githubusercontent.com/ChadRyanBailey/607-Data-Acquisition-and-Management/master/607-Weeks13-15-Final-Project/07%202016%20US%20Poverty%20Thresholds.csv'
+povertyThresholds <- read.csv(fileLocation4, sep = ",")
+povertyThresholds[18,]
+povertyThreshold <- str_replace_all(povertyThresholds[18,2], ",", "")
+povertyThreshold <- as.numeric(povertyThreshold)
+povertyThreshold
+
+
+```
+
+##3. Join the datasets together
+###3.1 Join Proficiency and Entity Demographics
+```{r}
+
+proficiencyCleaned <- proficiencyCleaned %>%
+  select(AcademicYear
+         , DistrictCode
+         , BuildingCode
+         , Subject
+         , nTested
+         , nProf
+         , PctProf
+         , nNonProf
+         , PctNonProf)
+
+entityDemog <- entityDemog %>%
+  select(AcademicYear
+         , DistrictCode
+         , BuildingCode
+         , nEnrollmentTotal
+         , nEnrollmentED
+         , PctEnrollmentED)
+
+prof_demog <- left_join(proficiencyCleaned, entityDemog, by = c('AcademicYear', 'DistrictCode', 'BuildingCode'))
+                        
+RecordsWithoutDemog <- prof_demog %>% 
+  summarise(sum(ifelse(is.na(nEnrollmentTotal), 1, 0)))
+
+prof_demog <- prof_demog %>% filter(!is.na(nEnrollmentTotal))
+
+#sample records inappropriately missing demographics, to be followed up with Michigan after this project
+#head(prof_demog %>% filter(is.na(nEnrollmentTotal)))
+
+```
+Michigan's entity demographic file appears to have filtered out schools that were open during the selected snapshot but are now closed when the datafile is downloaded. This results in `r RecordsWithoutDemog` records not having demographics and thus needing to be dropped.
+
+###3.2 Add Join to Entity Data
+This join gets the ID conversions between state codes and federal codes for schools.
+```{r}
+
+entity <- entity %>%
+  select(AcademicYear
+         ,ISDCode
+         ,ISDName
+         ,DistrictCode
+         ,DistrictNCESId
+         ,DistrictName
+         ,BuildingCode
+         ,BuildingName
+         ,GeographicDistrictCode
+         ,GeographicDistrictNCESId
+         ,GeographicDistrictName
+         ,Latitude
+         ,Longitude
+         ,EntityType = EntityTypeCategoryName)
+
+prof_demog_ent <- left_join(prof_demog, entity, by = c('AcademicYear', 'DistrictCode', 'BuildingCode'))
+
+RecordsWithoutEntityCodes <- prof_demog_ent %>% 
+  summarise(sum(ifelse(is.na(GeographicDistrictCode), 1, 0)))
+
+RecordsWithoutEntityCodes
+
+```
+No records were missing enity code conversions.
+
+###3.3 Add Join to US Census API data
+```{r}
+
+census <- census %>%
+  select(GeographicDistrictNCESId = DistrictCode_NCES
+         ,DistrictName_NCES = DistrictName
+         ,DistrictTotalPopulation = TotalPopulation
+         ,MedianHouseholdIncome)
+
+prof_demog_ent_census <- left_join(prof_demog_ent, census, by = c('GeographicDistrictNCESId'))
+
+RecordsWithoutCensus <- prof_demog_ent_census %>% 
+  summarise(sum(ifelse(is.na(DistrictTotalPopulation), 1, 0)))
+
+DistrictsWithoutCensus <- prof_demog_ent_census %>% 
+  filter(is.na(DistrictTotalPopulation)) %>%
+  distinct(GeographicDistrictNCESId) %>%
+  summarise(n())
+
+RecordsWithoutCensus
+DistrictsWithoutCensus
+
+#head(prof_demog_ent_census %>% filter(is.na(DistrictTotalPopulation)))
+
+prof_demog_ent_census <- prof_demog_ent_census %>%filter(!is.na(DistrictTotalPopulation))
+
+```
+The Census data is missing data for some geographic districts for reason which could not be determined at this point. This means that `r RecordsWithoutCensus` records from `r DistrictsWithoutCensus` geographic districts will be dropped from this analysis.
+
+
+###3.4 Add in Poverty Line
+```{r}
+
+class(povertyThreshold)
+final_data <- prof_demog_ent_census %>%
+  mutate(PovertyThreshold = povertyThreshold) %>%
+  mutate(MedianHouseholdIncomePctOfPoverty = round(MedianHouseholdIncome / PovertyThreshold * 100, 2))
+```
+
+###3.5 Review the final dataset
+####3.5a Look at summary of all records
+This section looks at the data set as a whole looking to ensure that the dataset as a whole has the expected:
+
+* number of records
+* variables (columns)
+* categorical values
+* ranges/spread for numerical values
+
+```{r}
+
+# for simplicity also limit to just one subject
+final_data <- final_data %>% filter(Subject == "English Language Arts")
+
+summary(final_data)
+
+```
+The dataset as a whole seems to have the expected number of records, the correct categorical values, and the correct ranges/spread for numerical values.
+
+
+####Zoom in on a single known district
+This section zooms in on a single geographical district with known values. This will allow the opportunity to check for possible corruption in the data. This exporation will start visually and only go to table/statistical review if issues are found.
+```{r}
+
+reviewcase <- final_data %>% filter(GeographicDistrictName == 'Grand Rapids Public Schools')
+
+ggplot(reviewcase
+       , aes(x = PctEnrollmentED, y = PctProf)) + 
+  geom_point(aes(size = nEnrollmentTotal, color = EntityType), alpha = 0.5) + 
+  geom_smooth(method=lm)
+```
+This scatter plot validates the expectation that Grand Rapids Public Schools data would have schools with varying rates of Economically Disadvantaged (ED) enrollment and that there should be moderately strong negative correlation between PctED and PctProf (percent proficient).  
+  
+
+```{r}
+ggplot(reviewcase
+       , aes(x = MedianHouseholdIncomePctOfPoverty, y = PctProf)) + 
+  geom_point(aes(size = nEnrollmentTotal, color = EntityType), alpha = 0.5) + 
+  geom_smooth(method=lm)
+```
+This scatter plot validates the expectation that for a geographic district there should be only one MedianHouseholdIncomePctPoverty and that Grand Rapids Public Schools' value for that measure would be near 170.
+
+
+##4. Analyze the data
+Now that the dataset has been constructed and validated, the analysis of the desired variables can begin.
+
+###4.1 Create regression models 
+####4.1a Create regression model for {PctEnrollmentED and PctProf} 
+```{r}
+
+# model for enrollmentED
+    enrollmentEDLM <- lm(PctProf ~ PctEnrollmentED, data = final_data)
+    summary(enrollmentEDLM)
+```
+
+####4.1b Create regression model for {MedianHouseholdIncomePctOfPoverty and Pct Prof}
+```{r}
+# model for communityPoverty
+    CommunityPovertyLM <- lm(PctProf ~ MedianHouseholdIncomePctOfPoverty, data = final_data)
+    summary(CommunityPovertyLM)
+```
+The regression models for both EnrollmentED and CommunityPoverty had lower than expected Adjusted R-squared values. Both were less than 0.6 (with Enrollment being 0.5997 and Community Poverty 0.3345).
+
+###4.2 Visual analyze the data
+####4.2a Plot of PctEnrollmentEd vs PctProf
+```{r}
+ggplot(final_data
+       , aes(x = PctEnrollmentED, y = PctProf)) + 
+  geom_point(aes(size = nEnrollmentTotal, color = EntityType), alpha = 0.5) + 
+  geom_smooth(method=lm) 
+
+
+ggplot(final_data
+       , aes(x = PctEnrollmentED, y = PctProf)) + 
+  geom_point(aes(size = nEnrollmentTotal, color = EntityType), alpha = 0.5) + 
+  facet_wrap(~EntityType)+ 
+  geom_smooth(method=lm)
+```
+
+####4.2b Plot of PctEnrollmentEd vs PctProf
+```{r}
+ggplot(final_data
+       , aes(x = MedianHouseholdIncomePctOfPoverty, y = PctProf)) + 
+  geom_point(aes(size = nEnrollmentTotal, color = EntityType), alpha = 0.5) + 
+  geom_smooth(method=lm)
+
+
+ggplot(final_data
+       , aes(x = MedianHouseholdIncomePctOfPoverty, y = PctProf)) + 
+  geom_point(aes(size = nEnrollmentTotal, color = EntityType), alpha = 0.5) + 
+  facet_wrap(~EntityType) +
+  geom_smooth(method=lm)
+
+```
+In reviewing the above tables and graphs it is clear that the direct linkage of students in the school is a much more powerfully correlated variable. However, there is still a meanginful correlation with community poverty level.
+
+##Conclusions
+This project was both fun and challenging. 
+
+Unfortunately, Michigan's data around school proficiency and and entity data were significantly more dirty than expected. This resulted in more time than expected being spent in the data acquisition, exploration, and tidying phase. Which meant there was less time than expectd for analysis.  
+
+However, as noted above, the project does show there is a correlation with both measures of poverty. Although unsurprisingly, the measure directly linked to the school (the school's percent of enrolled students identified as "Economically Disadvantaged") has a stronger correlation.
+
+
+Future analysis could be done to further explore this data:
+
+1. also pull in census data on the rate of community poverty. This would allow for a more direct measure of the correlative differences between direct school measure and community measures.
+2. create a community poverty measure that has a negative correlation with percent proficent
+3. directly look for schools with with very conflicting residuals between the two models
+4. look for differences by enrollment size, entity type
+5. Create a composite geographic district based on attending student residencies (as opposed to the current project's use of school location). This would require additional data.
